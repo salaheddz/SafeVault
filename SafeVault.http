@@ -1,0 +1,182 @@
+@host = http://localhost:5200
+
+### Register a new user
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+    "username": "testuser1",
+    "email": "test1@example.com",
+    "password": "SecurePass123!@#"
+}
+
+### Register with weak password (should fail)
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+    "username": "testuser2",
+    "email": "test2@example.com",
+    "password": "weak"
+}
+
+### Register with invalid email (should fail)
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+    "username": "testuser3",
+    "email": "invalid-email",
+    "password": "SecurePass123!@#"
+}
+
+### Register a user with invalid username (should fail)
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+    "username": "t@",
+    "password": "SecurePass123!@#",
+    "email": "test3@example.com"
+}
+
+### Login user
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+    "username": "testuser1",
+    "password": "SecurePass123!@#"
+}
+
+
+### Invalid Login Attempt
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+    "username": "testuser1",
+    "password": "WrongPassword123!@#"
+}
+
+
+### Register a new admin user
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+    "username": "adminROLE",
+    "email": "adminrole@example.com",
+    "password": "AdminPass123!@#",
+    "isAdmin": true
+}
+
+### Login admin
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+    "username": "adminROLE",
+    "password": "AdminPass123!@#"
+}
+
+### Get all users (requires Admin role)
+GET {{host}}/api/auth/users
+Authorization: Bearer <token>
+
+### Get user profile (requires authentication)
+GET {{host}}/api/auth/profile
+Authorization: Bearer <token>
+
+### Try accessing profile without token (should fail)
+GET {{host}}/api/auth/profile
+
+### Try accessing users list without token (should fail)
+GET {{host}}/api/auth/users
+
+### Try accessing users list with non-admin token (should fail)
+GET {{host}}/api/auth/users
+Authorization: Bearer <token>
+
+### SQL Injection Tests ###
+
+### Test SQL Injection in username (should fail)
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+    "username": "admin' OR '1'='1",
+    "email": "sql1@test.com",
+    "password": "SecurePass123!@#"
+}
+
+### Test SQL Injection in email (should fail)
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+    "username": "sqltest2",
+    "email": "test@example.com' UNION SELECT * FROM Users--",
+    "password": "SecurePass123!@#"
+}
+
+### Test SQL Injection in login (should fail)
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+    "username": "admin'; DROP TABLE Users;--",
+    "password": "anything"
+}
+
+### XSS Attack Tests ###
+
+### Test XSS in username (should fail)
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+    "username": "<script>alert('xss')</script>",
+    "email": "xss1@test.com",
+    "password": "SecurePass123!@#"
+}
+
+### Test XSS with JavaScript URI (should fail)
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+    "username": "javascript:alert('xss')",
+    "email": "xss2@test.com",
+    "password": "SecurePass123!@#"
+}
+
+### Test XSS with HTML tags (should fail)
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+    "username": "<img src=x onerror=alert('xss')>",
+    "email": "xss3@test.com",
+    "password": "SecurePass123!@#"
+}
+
+### Test XSS with encoded characters (should fail)
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+    "username": "&#60;script&#62;alert('xss')&#60;/script&#62;",
+    "email": "xss4@test.com",
+    "password": "SecurePass123!@#"
+}
+
+### Test combined SQL injection and XSS (should fail)
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+    "username": "admin';<script>alert(document.cookie)</script>",
+    "email": "combined@test.com",
+    "password": "SecurePass123!@#"
+}
